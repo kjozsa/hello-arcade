@@ -1,6 +1,7 @@
 import random
 
 import arcade
+from arcade.sprite import FACE_RIGHT, FACE_LEFT
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 600
@@ -15,7 +16,9 @@ class Heli(arcade.Window):
         super().__init__(int(SCREEN_WIDTH * SCALING), int(SCREEN_HEIGHT * SCALING), 'Heli')
         arcade.set_background_color(arcade.csscolor.LIGHT_SKY_BLUE)
 
-        self.player = arcade.Sprite('images/jet.png', SCALING, center_x=150 * SCALING, center_y=SCREEN_HEIGHT / 3 * 2 * SCALING)
+        self.player = arcade.AnimatedWalkingSprite(SCALING, center_x=150 * SCALING, center_y=SCREEN_HEIGHT / 3 * 2 * SCALING)
+        self.player.textures = [arcade.load_texture(f'images/heli/helicopter_{x}.png') for x in range(1, 9)]
+        self.player.textures_l = [arcade.load_texture(f'images/heli/helicopter_{x}.png', flipped_horizontally=True) for x in range(1, 9)]
         self.scene = arcade.Scene()
         self.scene.add_sprite('player', self.player)
 
@@ -34,11 +37,21 @@ class Heli(arcade.Window):
             self.player.change_y += 5
         if symbol == arcade.key.RIGHT:
             self.player.change_x += 5
+            if self.player.state == FACE_LEFT:
+                self.player.state = FACE_RIGHT
         if symbol == arcade.key.LEFT:
             self.player.change_x -= 5
+            if self.player.state == FACE_RIGHT:
+                self.player.state = FACE_LEFT
 
     def on_update(self, delta_time: float):
         self.physics_engine.update()
+
+        self.player.cur_texture_index += 1
+        if self.player.cur_texture_index >= len(self.player.textures):
+            self.player.cur_texture_index = 0
+        texture_used =  self.player.textures if self.player.state == FACE_RIGHT else self.player.textures_l
+        self.player.texture = texture_used[self.player.cur_texture_index]
 
         if self.player.center_y > BORDER_TOP:
             self.player.center_y = BORDER_TOP
