@@ -73,6 +73,7 @@ class Game(arcade.Window):
             return
 
         self.scene.on_update(delta_time)
+        self.scene.update_animation(0, ['player'])
 
         speed = self.player.change_y
         hit = self.physics_engine.update()
@@ -87,7 +88,6 @@ class Game(arcade.Window):
     def on_draw(self):
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH * SCALING, SCREEN_HEIGHT * SCALING, self.background, alpha=200)
         self.scene.draw()
-        self.scene.update_animation(0, ['player'])
 
         if self.player.crashed:
             arcade.draw_text('CRASHED', -150 + SCREEN_WIDTH * SCALING / 2, SCREEN_HEIGHT * SCALING / 2, font_size=80, color=arcade.color.RED_ORANGE, bold=True)
