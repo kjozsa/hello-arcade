@@ -14,9 +14,11 @@ BORDER_LEFT = 25 * SCALING
 class Heli(arcade.Window):
     def __init__(self):
         super().__init__(int(SCREEN_WIDTH * SCALING), int(SCREEN_HEIGHT * SCALING), 'Heli')
+        self.paused = False
         arcade.set_background_color(arcade.csscolor.LIGHT_SKY_BLUE)
+        self.background = arcade.load_texture('images/background.png')
 
-        self.player = arcade.AnimatedWalkingSprite(SCALING, center_x=150 * SCALING, center_y=SCREEN_HEIGHT / 3 * 2 * SCALING)
+        self.player = arcade.AnimatedWalkingSprite(SCALING * 1.3, center_x=150 * SCALING, center_y=SCREEN_HEIGHT / 3 * 2 * SCALING)
         self.player.textures = [arcade.load_texture(f'images/heli/helicopter_{x}.png') for x in range(1, 9)]
         self.player.textures_l = [arcade.load_texture(f'images/heli/helicopter_{x}.png', flipped_horizontally=True) for x in range(1, 9)]
         self.scene = arcade.Scene()
@@ -24,7 +26,8 @@ class Heli(arcade.Window):
 
         prev = 32
         for x in range(32, 64 + int(SCREEN_WIDTH * SCALING), 64):
-            prev += random.randint(-15, 15)
+            prev += random.randint(-30, 30)
+            prev = max(0, prev)
             wall = arcade.Sprite('images/Map_tile_76.png', SCALING, center_x=x, center_y=prev)
             self.scene.add_sprite('walls', wall)
 
@@ -43,14 +46,19 @@ class Heli(arcade.Window):
             self.player.change_x -= 5
             if self.player.state == FACE_RIGHT:
                 self.player.state = FACE_LEFT
+        if symbol == arcade.key.P:
+            self.paused = not self.paused
 
     def on_update(self, delta_time: float):
+        if self.paused:
+            return
+
         self.physics_engine.update()
 
         self.player.cur_texture_index += 1
         if self.player.cur_texture_index >= len(self.player.textures):
             self.player.cur_texture_index = 0
-        texture_used =  self.player.textures if self.player.state == FACE_RIGHT else self.player.textures_l
+        texture_used = self.player.textures if self.player.state == FACE_RIGHT else self.player.textures_l
         self.player.texture = texture_used[self.player.cur_texture_index]
 
         if self.player.center_y > BORDER_TOP:
@@ -67,6 +75,7 @@ class Heli(arcade.Window):
 
     def on_draw(self):
         arcade.start_render()
+        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH * SCALING, SCREEN_HEIGHT * SCALING, self.background, alpha=200)
         self.scene.draw()
 
 
