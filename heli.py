@@ -1,8 +1,13 @@
+import random
+
 import arcade
 
-SCREEN_WIDTH = 800
+SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 600
 SCALING = 2.0
+BORDER_TOP = (SCREEN_HEIGHT - 10) * SCALING
+BORDER_RIGHT = (SCREEN_WIDTH - 25) * SCALING
+BORDER_LEFT = 25 * SCALING
 
 
 class Heli(arcade.Window):
@@ -14,8 +19,10 @@ class Heli(arcade.Window):
         self.scene = arcade.Scene()
         self.scene.add_sprite('player', self.player)
 
-        for x in range(32, int(SCREEN_WIDTH * SCALING), 64):
-            wall = arcade.Sprite('images/Map_tile_76.png', SCALING, center_x=x, center_y=32)
+        prev = 32
+        for x in range(32, 64 + int(SCREEN_WIDTH * SCALING), 64):
+            prev += random.randint(-15, 15)
+            wall = arcade.Sprite('images/Map_tile_76.png', SCALING, center_x=x, center_y=prev)
             self.scene.add_sprite('walls', wall)
 
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.player, walls=self.scene.get_sprite_list('walls'), gravity_constant=0.2)
@@ -32,20 +39,17 @@ class Heli(arcade.Window):
 
     def on_update(self, delta_time: float):
         self.physics_engine.update()
-        if self.player.center_y < 10 * SCALING:
-            self.player.center_y = 10 * SCALING
+
+        if self.player.center_y > BORDER_TOP:
+            self.player.center_y = BORDER_TOP
             self.player.change_y = 0
 
-        if self.player.center_y > (SCREEN_HEIGHT - 10) * SCALING:
-            self.player.center_y = (SCREEN_HEIGHT - 10) * SCALING
-            self.player.change_y = 0
-
-        if self.player.center_x < 10 * SCALING:
-            self.player.center_x = 10 * SCALING
+        if self.player.center_x < BORDER_LEFT:
+            self.player.center_x = BORDER_LEFT
             self.player.change_x = 0
 
-        if self.player.center_x > (SCREEN_WIDTH - 10) * SCALING:
-            self.player.center_x = (SCREEN_WIDTH - 10) * SCALING
+        if self.player.center_x > BORDER_RIGHT:
+            self.player.center_x = BORDER_RIGHT
             self.player.change_x = 0
 
     def on_draw(self):
