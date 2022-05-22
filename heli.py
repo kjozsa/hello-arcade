@@ -2,6 +2,7 @@ import random
 
 import arcade
 from arcade.sprite import FACE_RIGHT, FACE_LEFT
+from loguru import logger
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 600
@@ -14,11 +15,13 @@ BORDER_LEFT = 25 * SCALING
 class Heli(arcade.Window):
     def __init__(self):
         super().__init__(int(SCREEN_WIDTH * SCALING), int(SCREEN_HEIGHT * SCALING), 'Heli')
+        self.crashed = False
         self.paused = False
         arcade.set_background_color(arcade.csscolor.LIGHT_SKY_BLUE)
         self.background = arcade.load_texture('images/background.png')
 
         self.player = arcade.AnimatedWalkingSprite(SCALING * 1.3, center_x=150 * SCALING, center_y=SCREEN_HEIGHT / 3 * 2 * SCALING)
+        self.player.name = 'player'
         self.player.textures = [arcade.load_texture(f'images/heli/helicopter_{x}.png') for x in range(1, 9)]
         self.player.textures_l = [arcade.load_texture(f'images/heli/helicopter_{x}.png', flipped_horizontally=True) for x in range(1, 9)]
         self.scene = arcade.Scene()
@@ -29,9 +32,12 @@ class Heli(arcade.Window):
             prev += random.randint(-30, 30)
             prev = max(0, prev)
             wall = arcade.Sprite('images/Map_tile_76.png', SCALING, center_x=x, center_y=prev)
+            wall.name = f'wall{x}'
             self.scene.add_sprite('walls', wall)
 
+        self.collision_sound = arcade.load_sound("sounds/Collision.wav")
         self.physics_engine = arcade.PhysicsEnginePlatformer(self.player, walls=self.scene.get_sprite_list('walls'), gravity_constant=0.2)
+        logger.info('starting up')
 
     def on_key_press(self, symbol: int, modifiers: int):
         if symbol in [arcade.key.Q, arcade.key.ESCAPE]:
@@ -52,8 +58,13 @@ class Heli(arcade.Window):
     def on_update(self, delta_time: float):
         if self.paused:
             return
+        speed = self.player.change_y
 
-        self.physics_engine.update()
+        hit = self.physics_engine.update()
+
+        if len(hit) > 0 and speed < -5:
+            arcade.play_sound(self.collision_sound)
+            self.crashed = True
 
         self.player.cur_texture_index += 1
         if self.player.cur_texture_index >= len(self.player.textures):
@@ -77,6 +88,10 @@ class Heli(arcade.Window):
         arcade.start_render()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH * SCALING, SCREEN_HEIGHT * SCALING, self.background, alpha=200)
         self.scene.draw()
+
+        if self.crashed:
+            arcade.draw_text('CRASHED', -150 + SCREEN_WIDTH * SCALING / 2, SCREEN_HEIGHT * SCALING / 2, font_size=80, color=arcade.color.RED_ORANGE, bold=True)
+            self.paused = True
 
 
 if __name__ == '__main__':
